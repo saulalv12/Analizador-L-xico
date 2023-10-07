@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Scanner {
-
+    int linea = 1;
     private static final Map<String, TipoToken> palabrasReservadas;
-
     static {
         palabrasReservadas = new HashMap<>();
         palabrasReservadas.put("and",    TipoToken.AND);
@@ -23,26 +22,20 @@ public class Scanner {
         palabrasReservadas.put("var",    TipoToken.VAR);
         palabrasReservadas.put("while",  TipoToken.WHILE);
     }
-
     private final String source;
-
     private final List<Token> tokens = new ArrayList<>();
-    
     public Scanner(String source){
         this.source = source + " ";
     }
-
     public List<Token> scan() throws Exception {
         int estado = 0;
         String lexema = "";
         char c;
-
         for(int i=0; i<source.length(); i++){
             c = source.charAt(i);
-
            switch (estado){
                 case 0:
-                    if (c=='+'){
+                   if (c=='+'){
                         tokens.add(new Token(TipoToken.PLUS, "+"));
                         estado = 0;
                     }
@@ -114,11 +107,11 @@ public class Scanner {
                         estado = 26;
                     }
                     else if(Character.isWhitespace(c)){
-                      //  System.out.println("espacio");
+                      //System.out.println("espacio");
+                      //Se agrega este if para evitar errores de reconocimiento de casos posteriores
                     }
                     else{
-                    
-                    throw new Exception("Caracter desconocido " + "'"+  c +"' "+ "en la linea " + linea + ".");
+                        throw new Exception("Caracter desconocido " + "'"+  c +"' "+ "en la linea " + linea + ".");
                      }
                     break;
                 case 1:
@@ -173,7 +166,6 @@ public class Scanner {
                     }
                     estado = 0;
                     break;
-                   
                 case 13:
                     if(Character.isLetterOrDigit(c)){
                         estado = 13;
@@ -190,14 +182,11 @@ public class Scanner {
                             Token t = new Token(tt, lexema);
                             tokens.add(t);
                         }
-
                         estado = 0;
                         lexema = "";
                         i--;
-
                     }
                     break;
-
                 case 15:
                     if(Character.isDigit(c)){
                         estado = 15;
@@ -214,7 +203,6 @@ public class Scanner {
                     else{
                         Token t = new Token(TipoToken.NUMBER, lexema, Integer.valueOf(lexema));
                         tokens.add(t);
-                        
                         estado = 0;
                         lexema = "";
                         i--;
@@ -253,7 +241,8 @@ public class Scanner {
                     break;
               case 19:
                     if (Character.isDigit(c)) {
-                        estado = 20;                        lexema+=c;
+                        estado = 20;                        
+                        lexema+=c;
                     }
                     break;   
               case 20:
@@ -263,7 +252,6 @@ public class Scanner {
                     }else{
                         Token t = new Token(TipoToken.NUMBER, lexema, Double.valueOf(lexema));
                         tokens.add(t);
-                        
                         estado = 0;
                         lexema = "";
                         i--;
@@ -308,7 +296,6 @@ public class Scanner {
                         estado=27;   
                     }
                     break;
-
               case 28:
                     if(c=='/'){
                         estado=0;    
@@ -320,7 +307,6 @@ public class Scanner {
                         estado=27;   
                     }
                     break;
-                    
                 case 30:
                     if(c=='\n'){
                         estado=0;
