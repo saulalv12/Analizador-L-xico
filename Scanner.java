@@ -268,13 +268,70 @@ public class Scanner {
                         lexema = "";
                         i--;
                     }
-                    break;   
+                    break;  
+              case 24:
+                    if (c == '"') {
+                        lexema+=c;
+                        tokens.add(new Token(TipoToken.STRING, lexema, lexema));
+                        lexema = "";
+                        estado = 0;
+                    } 
+                    else if (c == '\n') {
+                        throw new Exception("Cadena no puede contener un salto de línea en la línea " + linea + ".");
+                    }
+                    else if (i == source.length() - 1) {
+                        throw new Exception("Cadena no cerrada en la línea " + linea + ".");
+                    } 
+                    else {
+                        lexema += c;
+                    }
+                    break;
+              case 26:
+                    if(c=='*'){
+                        estado = 27; 
+                    }
+                    else if(c=='/'){
+                        estado=30;  
+                    }
+                    else{
+                        i--;  
+                        tokens.add(new Token(TipoToken.SLASH,"/"));
+                        estado=0;
+                        lexema="";  
+                    }
+                    break;  
+              case 27:
+                    if(c=='*'){
+                        estado=28; 
+                    }
+                    else {
+                        estado=27;   
+                    }
+                    break;
+
+              case 28:
+                    if(c=='/'){
+                        estado=0;    
+                    }
+                    else if(c=='*'){
+                        estado=28;   
+                    }
+                    else{
+                        estado=27;   
+                    }
+                    break;
+                    
+                case 30:
+                    if(c=='\n'){
+                        estado=0;
+                        lexema="";
+                    }
+                    else{
+                        estado=30;
+                    }
+                    break;
             }
-
-
         }
-
-
         return tokens;
     }
 }
