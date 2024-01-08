@@ -10,5 +10,18 @@ public class ExprBinary extends Expression{
         this.operator = operator;
         this.right = right;
     }
+      @Override
+    public String toString() {
+        return "(" + left.toString() + " " + operator.lexema + " " + right.toString() + ")";
+    }
 
+    @Override
+    public void print(String indentation) {
+        System.out.println(indentation + "ExprBinary");
+        System.out.println(indentation + "\tLeft:");
+        left.print(indentation + "\t\t");
+        System.out.println(indentation + "\tOperator: " + operator.lexema);
+        System.out.println(indentation + "\tRight:");
+        right.print(indentation + "\t\t");
+    }
 }
