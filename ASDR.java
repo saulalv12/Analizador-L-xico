@@ -283,91 +283,130 @@ public class ASDR implements Parser{
         }
     }
 //EXPRESIONES
-    private Expression  expression(){
+    private Expression expression(){
         ASSIGNMENT();
         return null;
     }
     
-    private void ASSIGNMENT(){
-        LOGIC_OR();
-        ASSIGNMENT_OPC();
+    private Expression ASSIGNMENT(){
+        Expression expr = LOGIC_OR();
+        expr = ASSIGNMENT_OPC(expr);
+        return expr;
     }
     //Expresion
-    private void ASSIGNMENT_OPC(){
-        if (hayErrores) return;
-        match(TipoToken.EQUAL);
-        expression();
+    private Expression ASSIGNMENT_OPC(Expression expr){
+        if(preanalisis.tipo == TipoToken.EQUAL){
+            match(TipoToken.EQUAL);
+            Token operadorL = previous();
+            expr = expression();
+            return new ExprAssign(operadorL, expr);
+        }
+        return expr;
     }
     
-    private void LOGIC_OR(){
-        LOGIC_AND();
-        LOGIC_OR_2();
+    private Expression LOGIC_OR(){
+        Expression expr = LOGIC_AND();
+        expr = LOGIC_OR_2(expr);
+        return expr;
     }
     //exprlogical
-    private void LOGIC_OR_2(){
-        if (hayErrores) return;
-        match(TipoToken.OR);
-        LOGIC_AND();
-        LOGIC_OR_2();
+    private Expression LOGIC_OR_2(Expression expr){
+        if(preanalisis.tipo == TipoToken.AND){
+            match(TipoToken.AND);
+            Token operadorL= previous();
+            Expression expr2= LOGIC_AND();
+            ExprLogical expl = new ExprLogical(expr, operadorL, expr2);
+            return LOGIC_OR_2(expl);
+        }
+        return expr;
     }
     
-    private void LOGIC_AND(){
-        EQUALITY();
-        LOGIC_AND_2();
+    private Expression LOGIC_AND(){
+        Expression expr = EQUALITY();
+        expr = LOGIC_AND_2(expr);
+        return expr;
     }
     //exptrlogical
-    private void LOGIC_AND_2(){
-        if (hayErrores) return;
-        match(TipoToken.AND);
-        EQUALITY();
-        LOGIC_AND_2();
-               
+    private Expression LOGIC_AND_2(Expression expr){
+        if(preanalisis.tipo == TipoToken.AND){
+            match(TipoToken.AND);
+            Token operadorL= previous();
+            Expression expr2= EQUALITY();
+            ExprLogical expl = new ExprLogical(expr, operadorL, expr2);
+            return LOGIC_AND_2(expl);
+        }
+        return expr;       
     }
     
-    private void EQUALITY(){
-        COMPARISON();
-        EQUALITY_2();
+    private Expression EQUALITY(){
+        Expression expr = COMPARISON();
+        expr = EQUALITY_2(expr);
+        return expr;
     }
     //equialty es binatry
-    private void EQUALITY_2(){
+    private Expression EQUALITY_2(Expression expr){
         switch (preanalisis.tipo) {
-            case BANG:
-                break;
-            case EQUAL:
-                break;
-            default:
-                break;
+            case BANG_EQUAL:
+                match(TipoToken.BANG_EQUAL);
+                Token operador = previous();
+                Expression expr2 = COMPARISON();
+                ExprBinary expb = new ExprBinary(expr, operador, expr2);
+                return EQUALITY_2(expb);
+            case EQUAL_EQUAL:
+                match(TipoToken.EQUAL_EQUAL);
+                operador = previous();
+                expr2 = COMPARISON();
+                expb = new ExprBinary(expr, operador, expr2);
+                return EQUALITY_2(expb);
         }
+        return expr;
     }
     
-    private Expression COMPARISON(){
+    private Expression COMPARISON() {
         Expression expr = TERM();
         expr = COMPARISON_2(expr);
         return expr;
     }
+
     //and or logica
     //binary comparison
-    private Expression COMPARISON_2(Expression expr){
+    private Expression COMPARISON_2(Expression expr) {
         switch (preanalisis.tipo) {
             case GREATER:
-                break;
+                match(TipoToken.GREATER);
+                Token operador = previous();
+                Expression expr2 = TERM();
+                ExprBinary expb = new ExprBinary(expr, operador, expr2);
+                return COMPARISON_2(expb);
             case GREATER_EQUAL:
-                break;
+                match(TipoToken.GREATER_EQUAL);
+                operador = previous();
+                expr2 = TERM();
+                expb = new ExprBinary(expr, operador, expr2);
+                return COMPARISON_2(expb);
             case LESS:
-                break;
+                match(TipoToken.LESS);
+                operador = previous();
+                expr2 = TERM();
+                expb = new ExprBinary(expr, operador, expr2);
+                COMPARISON_2(expb);
             case LESS_EQUAL:
-                break;
+                match(TipoToken.LESS_EQUAL);
+                operador = previous();
+                expr2 = TERM();
+                expb = new ExprBinary(expr, operador, expr2);
+                COMPARISON_2(expb);
         }
         return expr;
     }
-    
-    private Expression TERM(){
+
+    private Expression TERM() {
         Expression expr = FACTOR();
         expr = TERM_2(expr);
         return expr;
     }
-    
-    private Expression TERM_2(Expression expr){
+
+    private Expression TERM_2(Expression expr) {
         switch (preanalisis.tipo) {
             case MINUS:
                 match(TipoToken.MINUS);
@@ -384,14 +423,14 @@ public class ASDR implements Parser{
         }
         return expr;
     }
-    
-    private Expression FACTOR(){
+
+    private Expression FACTOR() {
         Expression expr = UNARY();
         expr = FACTOR_2(expr);
         return expr;
     }
-    
-    private Expression FACTOR_2(Expression expr){
+
+    private Expression FACTOR_2(Expression expr) {
         switch (preanalisis.tipo) {
             case SLASH:
                 match(TipoToken.SLASH);
@@ -408,8 +447,8 @@ public class ASDR implements Parser{
         }
         return expr;
     }
-    
-    private Expression UNARY(){
+
+    private Expression UNARY() {
         switch (preanalisis.tipo) {
             case BANG:
                 match(TipoToken.BANG);
@@ -417,7 +456,7 @@ public class ASDR implements Parser{
                 Expression expr = UNARY();
                 return new ExprUnary(operador, expr);
             case MINUS:
-               match(TipoToken.MINUS);
+                match(TipoToken.MINUS);
                 operador = previous();
                 expr = UNARY();
                 return new ExprUnary(operador, expr);
@@ -425,15 +464,15 @@ public class ASDR implements Parser{
                 return CALL();
         }
     }
-    
-    private Expression CALL(){
+
+    private Expression CALL() {
         Expression expr = PRIMARY();
         expr = CALL_2(expr);
         return expr;
     }
-    
-    private Expression CALL_2(Expression expr){
-        switch (preanalisis.tipo){
+
+    private Expression CALL_2(Expression expr) {
+        switch (preanalisis.tipo) {
             case LEFT_PAREN:
                 match(TipoToken.LEFT_PAREN);
                 List<Expression> lstArguments = ARGUMENTS_OPC();
@@ -443,9 +482,9 @@ public class ASDR implements Parser{
         }
         return expr;
     }
-    
-    private Expression PRIMARY(){
-        switch(preanalisis.tipo){
+
+    private Expression PRIMARY() {
+        switch (preanalisis.tipo) {
             case TRUE:
                 match(TipoToken.TRUE);
                 return new ExprLiteral(true);
@@ -476,6 +515,7 @@ public class ASDR implements Parser{
         }
         return null;
     }
+
 //OTRAS
     private Statement FUNCTION() {
         if(preanalisis.tipo == TipoToken.IDENTIFIER){
