@@ -123,7 +123,7 @@ public class ASDR implements Parser{
             
         }
     }
-    //EXPRESIONES
+//EXPRESIONES
     private Expression  expression(){
         ASSIGNMENT();
         return null;
@@ -135,9 +135,9 @@ public class ASDR implements Parser{
     }
     //Expresion
     private void ASSIGNMENT_OPC(){
-        if(preanalisis.tipo == TipoToken.EQUAL){
-            
-        }
+        if (hayErrores) return;
+        match(TipoToken.EQUAL);
+        expression();
     }
     
     private void LOGIC_OR(){
@@ -146,9 +146,10 @@ public class ASDR implements Parser{
     }
     //exprlogical
     private void LOGIC_OR_2(){
-     if(preanalisis.tipo == TipoToken.LEFT_BRACE){
-            
-        }   
+        if (hayErrores) return;
+        match(TipoToken.OR);
+        LOGIC_AND();
+        LOGIC_OR_2();
     }
     
     private void LOGIC_AND(){
@@ -157,9 +158,11 @@ public class ASDR implements Parser{
     }
     //exptrlogical
     private void LOGIC_AND_2(){
-        if(preanalisis.tipo == TipoToken.AND){
-            
-        }
+        if (hayErrores) return;
+        match(TipoToken.AND);
+        EQUALITY();
+        LOGIC_AND_2();
+               
     }
     
     private void EQUALITY(){
