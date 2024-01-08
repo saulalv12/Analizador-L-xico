@@ -1,4 +1,15 @@
 package interprete;
+import static interprete.TipoToken.BANG;
+import static interprete.TipoToken.FALSE;
+import static interprete.TipoToken.IDENTIFIER;
+import static interprete.TipoToken.MINUS;
+import static interprete.TipoToken.NULL;
+import static interprete.TipoToken.NUMBER;
+import static interprete.TipoToken.SEMICOLON;
+import static interprete.TipoToken.STRING;
+import static interprete.TipoToken.TRUE;
+import static interprete.TipoToken.VAR;
+
 import java.util.List;
 
 public class ASDR implements Parser{
@@ -34,19 +45,23 @@ public class ASDR implements Parser{
     
     private void DECLARATION(){
         if(preanalisis.tipo == TipoToken.FUN){
-            
+            FUN_DECL();
+            DECLARATION();
         }
         if(preanalisis.tipo == TipoToken.VAR){
-            
+            VAR_DECL();
+            DECLARATION();
         }
         if (preanalisis.tipo == TipoToken.EQUAL || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE  || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT || preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE){
-            
+            VAR_INIT();
+            DECLARATION();
         }
     }
     //DECLARACIONES
     private void FUN_DECL(){
         if(preanalisis.tipo == TipoToken.FUN){
-            
+            match(TipoToken.FUN);
+            FUNCTION();
         }
     }
     
@@ -63,65 +78,214 @@ public class ASDR implements Parser{
     
     private void VAR_INIT(){
         if(preanalisis.tipo == TipoToken.EQUAL){
-            
+            expression();
+                match(TipoToken.EQUAL);
+               // return new StmtExpression(expr);
         }
     }
     //SENTENCIAS
     private void STATEMENT(){
+        if (hayErrores) return;
+        
+        if (preanalisis.tipo.equals(TipoToken.BANG)||preanalisis.tipo.equals(TipoToken.MINUS)||preanalisis.tipo.equals(TipoToken.TRUE)||
+                preanalisis.tipo.equals(TipoToken.FALSE)||preanalisis.tipo.equals(TipoToken.NULL)||preanalisis.tipo.equals(TipoToken.NUMBER)||
+                preanalisis.tipo.equals(TipoToken.STRING)||preanalisis.tipo.equals(TipoToken.IDENTIFIER)||preanalisis.tipo.equals(TipoToken.LEFT_PAREN)) {
+            EXPR_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.FOR) && preanalisis.tipo.equals(TipoToken.LEFT_PAREN)) {
+            FOR_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.IF)) {
+            IF_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.PRINT)) {
+            PRINT_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.RETURN)) {
+            RETURN_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.WHILE)) {
+            WHILE_STMT();
+        }
+        if (preanalisis.tipo.equals(TipoToken.LEFT_BRACE)) {
+            BLOCK();
+        }
         
     }
       //expresion set, get, super no se usan 
     
     private Statement EXPR_STMT(){
-        //regresa un statment expression
+        switch(preanalisis.tipo){
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                Expression expr = expression();
+                match(TipoToken.SEMICOLON);
+                return new StmtExpression(expr);
+            default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);
+                
+        }
         return null;
-        //regresa un statment expression
-    } 
-    
-    private void FOR_STMT(){
         
     } 
     
+    private void FOR_STMT(){
+        match(TipoToken.FOR);
+        match(TipoToken.LEFT_PAREN);
+        FOR_STMT_1();
+        FOR_STMT_2();
+        FOR_STMT_3();
+        match(TipoToken.RIGHT_PAREN);
+        STATEMENT();
+    } 
+    
     private void FOR_STMT_1(){
+        switch(preanalisis.tipo){
+            case VAR:
+                 VAR_DECL();
+                 break;
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                EXPR_STMT();
+            break;
+            case SEMICOLON:
+                match(TipoToken.SEMICOLON);
+            break;
+        default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);   
+        }
+       
+        
         
     }
     
     private void FOR_STMT_2(){
+        if(hayErrores) return;
         
+        switch(preanalisis.tipo){
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                Expression expr = expression();
+                
+            break;
+            case SEMICOLON:
+                match(TipoToken.SEMICOLON);
+            break;
+        default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);   
+        }
     }
     
     private void FOR_STMT_3(){
-        
+       switch(preanalisis.tipo){
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                Expression expr = expression();
+           
+        default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);   
+        }
+    
     }
     
     private void IF_STMT(){
-        
+        match(TipoToken.IF);
+        match(TipoToken.LEFT_PAREN);
+        Expression expr = expression();
+        match(TipoToken.RIGHT_PAREN);
+        STATEMENT();
+        ELSE_STMT();
     }
     
     private void ELSE_STMT(){
-        
+        if (preanalisis.tipo== TipoToken.ELSE) {
+            match(TipoToken.ELSE);
+            STATEMENT();
+        }
     }
     
     private void PRINT_STMT(){
+        match(TipoToken.PRINT);
+        Expression expr = expression();
+        match(TipoToken.SEMICOLON);
         
     }
     
     private void RETURN_STMT(){
-        
+        if (hayErrores) return;
+        match(TipoToken.RETURN);
+        RETURN_EXP_OPC();
+        match(TipoToken.SEMICOLON);
     }
     
     private void RETURN_EXP_OPC(){
-        
+        if (hayErrores) return;
+        switch(preanalisis.tipo){
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                Expression expr = expression();
+           
+        default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);   
+        }
+    
     }
     
     private void WHILE_STMT(){
-        
+        if (hayErrores) return;
+        match(TipoToken.WHILE);
+        match(TipoToken.LEFT_PAREN);
+        expression();
+        match(TipoToken.RIGHT_PAREN);
+        STATEMENT();
     }
     
     private void BLOCK(){
-        if(preanalisis.tipo == TipoToken.LEFT_BRACE){
-            
-        }
+        if (hayErrores) return;
+        
+            match(TipoToken.LEFT_BRACE);
+            DECLARATION();
+            match(TipoToken.RIGHT_BRACE);
     }
 //EXPRESIONES
     private Expression  expression(){
