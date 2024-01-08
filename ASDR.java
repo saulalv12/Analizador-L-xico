@@ -1,49 +1,45 @@
 package interprete;
-import static interprete.TipoToken.BANG;
-import static interprete.TipoToken.FALSE;
-import static interprete.TipoToken.IDENTIFIER;
-import static interprete.TipoToken.MINUS;
-import static interprete.TipoToken.NULL;
-import static interprete.TipoToken.NUMBER;
-import static interprete.TipoToken.SEMICOLON;
-import static interprete.TipoToken.STRING;
-import static interprete.TipoToken.TRUE;
-import static interprete.TipoToken.VAR;
-
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class ASDR implements Parser{
+public class ASDR implements Parser {
 
     private int i = 0;
     private boolean hayErrores = false;
     private Token preanalisis;
     private final List<Token> tokens;
-
-
-    public ASDR(List<Token> tokens){
+    private List<Statement> statements; 
+    private TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ASDR(List<Token> tokens) {
         this.tokens = tokens;
         preanalisis = this.tokens.get(i);
+        statements = new ArrayList<>(); 
     }
 
     @Override
     public boolean parse() {
-        PROGRAM();
-
-        if(preanalisis.tipo == TipoToken.EOF && !hayErrores){
-            System.out.println("Consulta correcta");
-            return  true;
-        }else {
+        statements = PROGRAM(); 
+        
+        if (preanalisis.tipo == TipoToken.EOF && !hayErrores) {
+            System.out.println("Entrada correcta");
+             printTree();
+            return true;
+        } else {
             System.out.println("Se encontraron errores");
+            return false;
         }
-        return false;
     }
 
-    // 
-    public List<Statement> PROGRAM(){
-        List<Statement> statements = new ArrayList<>();
-        if(preanalisis.tipo == TipoToken.FUN || preanalisis.tipo == TipoToken.VAR || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER ||  preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT ||  preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE){
+    public List<Statement> PROGRAM() {
+        statements.clear(); 
+        if (preanalisis.tipo == TipoToken.FUN || preanalisis.tipo == TipoToken.VAR || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT || preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE) {
             DECLARATION(statements);
         }
+        return statements; // Devuelve la lista de declaraciones de la variable de instancia    
+    }
+    
+    public List<Statement> getStatements() {
         return statements;
     }
     
@@ -601,3 +597,10 @@ public class ASDR implements Parser{
     private Token previous() {
         return this.tokens.get(i - 1);
     }
+    
+    public void printTree() {
+    for (Statement stmt : statements) {
+        stmt.print("");
+        }
+    }
+}
