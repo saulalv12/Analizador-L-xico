@@ -316,40 +316,74 @@ public class ASDR implements Parser{
     }
     //OTRAS
     private void FUNCTION(){
-        if(preanalisis.tipo == TipoToken.IDENTIFIER){
-            
-        }
+        if (hayErrores) return;
+        match(TipoToken.IDENTIFIER);
+        match(TipoToken.LEFT_PAREN);
+        PARAMETERS_OPC();
+        match(TipoToken.RIGHT_PAREN);
+        BLOCK();
     }
     
     private void FUNCTIONS(){
+        if (hayErrores) return;
         FUN_DECL();
         FUNCTIONS();
     }
     
     private void PARAMETERS_OPC(){
+        if (hayErrores) return;
         PARAMETERS();
     }
     
     private void PARAMETERS(){
-        if(preanalisis.tipo == TipoToken.IDENTIFIER){
-            
+        if (hayErrores) return;
+        match(TipoToken.IDENTIFIER);
+        //PARAMETERS_2(preanalisis.tipo);
+    }
+    
+    private void PARAMETERS_2(List<Token>parametros){
+        if (preanalisis.tipo==TipoToken.COMMA) {
+            match(TipoToken.COMMA);
+            match(TipoToken.IDENTIFIER);
+            Token name = previous();
+            parametros.add(name);
+            PARAMETERS_2(parametros);
+        }else{
+             System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema
+                     +" se esperaba un identificador");
         }
     }
     
-    private void PARAMETERS_2(){
-        
-    }
-    
     private List<Expression> ARGUMENTS_OPC(){
-        //EXPRESSION();
-        ARGUMENTS();
+        switch(preanalisis.tipo){
+            case BANG:
+            case MINUS:
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case NUMBER:
+            case STRING:
+            case IDENTIFIER:
+                ARGUMENTS();
+           
+        default:
+                System.out.println("Error en la posicion" 
+                        + preanalisis.posicion
+                        +" cerca de "+ preanalisis.lexema);   
+        }
+            
+        
+        
         return null;
     }
     
     private void ARGUMENTS(){
-        if(preanalisis.tipo == TipoToken.COMMA){
-            
-        }
+        if (hayErrores) return;
+        match(TipoToken.COMMA);
+        expression();
+        ARGUMENTS();
     }
     
     private void match(TipoToken tt){
