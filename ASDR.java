@@ -39,253 +39,248 @@ public class ASDR implements Parser{
     }
 
     // 
-    private void PROGRAM(){
-        DECLARATION();
+    public List<Statement> PROGRAM(){
+        List<Statement> statements = new ArrayList<>();
+        if(preanalisis.tipo == TipoToken.FUN || preanalisis.tipo == TipoToken.VAR || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER ||  preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT ||  preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE){
+            DECLARATION(statements);
+        }
+        return statements;
     }
     
-    private void DECLARATION(){
+    private void DECLARATION(List <Statement> statements){
         if(preanalisis.tipo == TipoToken.FUN){
-            FUN_DECL();
-            DECLARATION();
+           Statement funDecl = FUN_DECL();
+            statements.add(funDecl);
+            DECLARATION(statements);
         }
-        if(preanalisis.tipo == TipoToken.VAR){
-            VAR_DECL();
-            DECLARATION();
+        else if(preanalisis.tipo == TipoToken.VAR){
+            Statement varDecl = VAR_DECL();
+            statements.add(varDecl);
+            DECLARATION(statements);
         }
-        if (preanalisis.tipo == TipoToken.EQUAL || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE  || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT || preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE){
-            VAR_INIT();
-            DECLARATION();
+        else if (preanalisis.tipo == TipoToken.EQUAL || preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE  || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN || preanalisis.tipo == TipoToken.FOR || preanalisis.tipo == TipoToken.IF || preanalisis.tipo == TipoToken.PRINT || preanalisis.tipo == TipoToken.RETURN || preanalisis.tipo == TipoToken.WHILE || preanalisis.tipo == TipoToken.LEFT_BRACE){
+            Statement stmt = STATEMENT();
+            statements.add(stmt);
+            DECLARATION(statements);
         }
     }
     //DECLARACIONES
-    private void FUN_DECL(){
+    private Statement FUN_DECL(){
         if(preanalisis.tipo == TipoToken.FUN){
             match(TipoToken.FUN);
-            FUNCTION();
+            Statement funDecl = FUNCTION();
+            return funDecl;
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'fun'");
+            return null;
         }
     }
     
-    private void VAR_DECL(){
-        switch (preanalisis.tipo) {
-            case VAR:
-                break;
-            case IDENTIFIER:
-                break;
-            default:
-                break;
+    private Statement VAR_DECL(){
+        Expression initialziaer = null;
+        if(preanalisis.tipo == TipoToken.VAR){
+            match(TipoToken.VAR);
+            match(TipoToken.IDENTIFIER);
+            Token name = previous();
+            if(preanalisis.tipo == TipoToken.EQUAL){
+                initialziaer = VAR_INIT(initialziaer);
+            }
+            match(TipoToken.SEMICOLON);
+            return new StmtVar(name, initialziaer);
+        }else{
+             hayErrores=true;
+            System.out.println("Error, se esperaba un 'var'");
+            return null;
         }
     }
     
-    private void VAR_INIT(){
+    private Expression  VAR_INIT(Expression initializer){
         if(preanalisis.tipo == TipoToken.EQUAL){
-            expression();
-                match(TipoToken.EQUAL);
-               // return new StmtExpression(expr);
+            match(TipoToken.EQUAL);
+            initializer = expression();
         }
+        return initializer;
     }
     //SENTENCIAS
-    private void STATEMENT(){
-        if (hayErrores) return;
-        
-        if (preanalisis.tipo.equals(TipoToken.BANG)||preanalisis.tipo.equals(TipoToken.MINUS)||preanalisis.tipo.equals(TipoToken.TRUE)||
-                preanalisis.tipo.equals(TipoToken.FALSE)||preanalisis.tipo.equals(TipoToken.NULL)||preanalisis.tipo.equals(TipoToken.NUMBER)||
-                preanalisis.tipo.equals(TipoToken.STRING)||preanalisis.tipo.equals(TipoToken.IDENTIFIER)||preanalisis.tipo.equals(TipoToken.LEFT_PAREN)) {
-            EXPR_STMT();
+     private Statement STATEMENT(){
+        if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){
+            Statement expr = EXPR_STMT();
+            return expr;
+        }else if(preanalisis.tipo == TipoToken.FOR){
+            Statement forStmt = FOR_STMT();
+            return forStmt;
+        }else if(preanalisis.tipo == TipoToken.IF){
+            Statement if1 = IF_STMT();
+            return if1;
+        }else if(preanalisis.tipo == TipoToken.PRINT){
+            Statement print  = PRINT_STMT();
+            return print;
+        }else if(preanalisis.tipo == TipoToken.RETURN){
+            Statement return1 = RETURN_STMT();
+            return return1;
+        }else if(preanalisis.tipo == TipoToken.WHILE){
+            Statement while1 = WHILE_STMT();
+            return while1;
+        }else if(preanalisis.tipo == TipoToken.LEFT_BRACE){
+            Statement block = BLOCK();
+            return block;
+        }else{
+             hayErrores=true;
+             System.out.println("Error");
+             return null;
         }
-        if (preanalisis.tipo.equals(TipoToken.FOR) && preanalisis.tipo.equals(TipoToken.LEFT_PAREN)) {
-            FOR_STMT();
-        }
-        if (preanalisis.tipo.equals(TipoToken.IF)) {
-            IF_STMT();
-        }
-        if (preanalisis.tipo.equals(TipoToken.PRINT)) {
-            PRINT_STMT();
-        }
-        if (preanalisis.tipo.equals(TipoToken.RETURN)) {
-            RETURN_STMT();
-        }
-        if (preanalisis.tipo.equals(TipoToken.WHILE)) {
-            WHILE_STMT();
-        }
-        if (preanalisis.tipo.equals(TipoToken.LEFT_BRACE)) {
-            BLOCK();
-        }
-        
     }
       //expresion set, get, super no se usan 
     
     private Statement EXPR_STMT(){
-        switch(preanalisis.tipo){
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                Expression expr = expression();
-                match(TipoToken.SEMICOLON);
-                return new StmtExpression(expr);
-            default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);
-                
-        }
-        return null;
+        Expression expr = expression();
+        match(TipoToken.SEMICOLON);
+        return new StmtExpression(expr);
         
     } 
     
-    private void FOR_STMT(){
-        match(TipoToken.FOR);
-        match(TipoToken.LEFT_PAREN);
-        FOR_STMT_1();
-        FOR_STMT_2();
-        FOR_STMT_3();
-        match(TipoToken.RIGHT_PAREN);
-        STATEMENT();
+    private Statement FOR_STMT(){
+        if(preanalisis.tipo == TipoToken.FOR){
+            match(TipoToken.FOR);
+            match(TipoToken.LEFT_PAREN);
+            FOR_STMT_1();
+            Expression condition = FOR_STMT_2();
+            FOR_STMT_3();
+            match(TipoToken.RIGHT_PAREN);
+            Statement body = STATEMENT();
+            return new StmtLoop(condition, body);
+        }else{
+             hayErrores=true;
+            System.out.println("Error, se esperaba un 'for'");
+            return null;
+        }
     } 
     
     private void FOR_STMT_1(){
-        switch(preanalisis.tipo){
-            case VAR:
-                 VAR_DECL();
-                 break;
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                EXPR_STMT();
-            break;
-            case SEMICOLON:
-                match(TipoToken.SEMICOLON);
-            break;
-        default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);   
+        if(preanalisis.tipo == TipoToken.VAR){
+            VAR_DECL();
+        }else if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){
+            EXPR_STMT();
+        }else if(preanalisis.tipo == TipoToken.SEMICOLON){
+            match(TipoToken.SEMICOLON);
+        }else{
+            hayErrores=true;
+            System.out.println("Error en el primer elemento del for de la linea ");
         }
-       
-        
-        
     }
     
-    private void FOR_STMT_2(){
-        if(hayErrores) return;
-        
-        switch(preanalisis.tipo){
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                Expression expr = expression();
-                
-            break;
-            case SEMICOLON:
-                match(TipoToken.SEMICOLON);
-            break;
-        default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);   
+    private Expression FOR_STMT_2(){
+        if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){
+            Expression expr = expression();
+            match(TipoToken.SEMICOLON);
+            return new ExprGrouping(expr);
+        }else if(preanalisis.tipo == TipoToken.SEMICOLON){
+            match(TipoToken.SEMICOLON);
+            return new ExprGrouping(null);
+        }else{
+            hayErrores=true;
+            System.out.println("Error en el segundo elemento del for de la linea ");
+            return null;
         }
     }
     
     private void FOR_STMT_3(){
-       switch(preanalisis.tipo){
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                Expression expr = expression();
-           
-        default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);   
+       expression();
+    }
+    
+    private Statement IF_STMT(){
+        Statement elseBranch = null;
+        if(preanalisis.tipo==TipoToken.IF){
+            match(TipoToken.IF);
+            match(TipoToken.LEFT_PAREN);
+            Expression condition = expression();
+            match(TipoToken.RIGHT_PAREN);
+            Statement thenBranch =STATEMENT();
+            if(preanalisis.tipo == TipoToken.ELSE){
+                elseBranch= ELSE_STMT(elseBranch);
+            }   
+            return new StmtIf(condition, thenBranch, elseBranch);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'if'");
+            return null;
         }
-    
     }
     
-    private void IF_STMT(){
-        match(TipoToken.IF);
-        match(TipoToken.LEFT_PAREN);
-        Expression expr = expression();
-        match(TipoToken.RIGHT_PAREN);
-        STATEMENT();
-        ELSE_STMT();
-    }
-    
-    private void ELSE_STMT(){
-        if (preanalisis.tipo== TipoToken.ELSE) {
+    private Statement ELSE_STMT(Statement elseBranch){
+        if(preanalisis.tipo == TipoToken.ELSE){
             match(TipoToken.ELSE);
-            STATEMENT();
+            elseBranch = STATEMENT();
+            return elseBranch;
+        }
+        return elseBranch;
+    }
+    
+    private Statement PRINT_STMT(){
+        if(preanalisis.tipo == TipoToken.PRINT){
+            match(TipoToken.PRINT);
+            Expression expr = expression();
+            match(TipoToken.SEMICOLON);
+            return new StmtPrint(expr);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'print'");
+            return null;
         }
     }
     
-    private void PRINT_STMT(){
-        match(TipoToken.PRINT);
-        Expression expr = expression();
-        match(TipoToken.SEMICOLON);
-        
-    }
-    
-    private void RETURN_STMT(){
-        if (hayErrores) return;
-        match(TipoToken.RETURN);
-        RETURN_EXP_OPC();
-        match(TipoToken.SEMICOLON);
-    }
-    
-    private void RETURN_EXP_OPC(){
-        if (hayErrores) return;
-        switch(preanalisis.tipo){
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                Expression expr = expression();
-           
-        default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);   
+    private Statement RETURN_STMT(){
+        Expression value=null;
+        if(preanalisis.tipo == TipoToken.RETURN){
+            match(TipoToken.RETURN);
+            if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){
+                value = RETURN_EXP_OPC(value);
+            }
+            match(TipoToken.SEMICOLON);
+            return new StmtReturn(value);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'return'");
+            return null;
         }
-    
     }
     
-    private void WHILE_STMT(){
-        if (hayErrores) return;
-        match(TipoToken.WHILE);
-        match(TipoToken.LEFT_PAREN);
-        expression();
-        match(TipoToken.RIGHT_PAREN);
-        STATEMENT();
+    private Expression RETURN_EXP_OPC(Expression value){
+        if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){
+            value = expression();
+            return value;
+        }
+        return value;
     }
     
-    private void BLOCK(){
-        if (hayErrores) return;
-        
+    private Statement WHILE_STMT(){
+        if(preanalisis.tipo == TipoToken.WHILE){
+            match(TipoToken.WHILE);
+            match(TipoToken.LEFT_PAREN);
+            Expression condition = expression();
+            match(TipoToken.RIGHT_PAREN);
+            Statement body = STATEMENT();
+            return new StmtLoop(condition, body);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'while'");
+            return null;
+        }
+    }
+    
+    private Statement BLOCK(){
+        List <Statement> statements =new ArrayList<>();
+        if(preanalisis.tipo == TipoToken.LEFT_BRACE){
             match(TipoToken.LEFT_BRACE);
-            DECLARATION();
+            DECLARATION(statements);
             match(TipoToken.RIGHT_BRACE);
+            return new StmtBlock(statements);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un 'LEFT_BRACE'");
+            return null;
+        }
     }
 //EXPRESIONES
     private Expression  expression(){
