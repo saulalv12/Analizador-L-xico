@@ -8,4 +8,12 @@ public class ExprGet extends Expression{
         this.object = object;
         this.name = name;
     }
+    @Override
+    public void print(String indentation) {
+        System.out.println(indentation + "ExprGet");
+        System.out.println(indentation + "\tObject:");
+        object.print(indentation + "\t\t");
+
+        System.out.println(indentation + "\tName: " + name.lexema);
+    }
 }
