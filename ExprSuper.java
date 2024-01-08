@@ -8,4 +8,15 @@ public class ExprSuper extends Expression {
         // this.keyword = keyword;
         this.method = method;
     }
+
+    @Override
+    public void print(String indentation) {
+       System.out.println(indentation + "ExprSuper");
+        System.out.println(indentation + "\tMethod: " + method.lexema);
+    }
+
+    @Override
+    public Object evaluate(TablaSimbolos tablita) {
+        return null;
+    }
 }
