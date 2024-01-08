@@ -6,4 +6,10 @@ public class StmtExpression extends Statement {
     StmtExpression(Expression expression) {
         this.expression = expression;
     }
+
+    @Override
+    public void print(String indentation) {
+        System.out.println(indentation + "StmtExpression");
+        expression.print(indentation + "\t");
+    }
 }
