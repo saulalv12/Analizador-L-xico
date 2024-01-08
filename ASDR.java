@@ -476,90 +476,88 @@ public class ASDR implements Parser{
         }
         return null;
     }
-    //OTRAS
-    private void FUNCTION(){
-        if (hayErrores) return;
-        match(TipoToken.IDENTIFIER);
-        match(TipoToken.LEFT_PAREN);
-        PARAMETERS_OPC();
-        match(TipoToken.RIGHT_PAREN);
-        BLOCK();
+//OTRAS
+    private Statement FUNCTION() {
+        if(preanalisis.tipo == TipoToken.IDENTIFIER){
+            match(TipoToken.IDENTIFIER);
+            Token name=previous();
+            match(TipoToken.LEFT_PAREN);
+            List <Token> params = PARAMETERS_OPC();       
+            match(TipoToken.RIGHT_PAREN);
+            Statement body = BLOCK();
+            return new StmtFunction(name, params, (StmtBlock) body);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un id");
+            return null;
+        }
     }
-    
-    private void FUNCTIONS(){
-        if (hayErrores) return;
-        FUN_DECL();
-        FUNCTIONS();
+
+    private void FUNCTIONS() {
+        if(preanalisis.tipo == TipoToken.FUN){
+            FUN_DECL();
+             FUNCTIONS();
+         }
     }
-    
-    private void PARAMETERS_OPC(){
-        if (hayErrores) return;
-        PARAMETERS();
+
+    private List <Token> PARAMETERS_OPC() {
+        List <Token> params = new ArrayList<>();
+        if(preanalisis.tipo == TipoToken.IDENTIFIER){
+            PARAMETERS(params);
+        }
+        return params;
     }
-    
-    private void PARAMETERS(){
-        if (hayErrores) return;
-        match(TipoToken.IDENTIFIER);
-        //PARAMETERS_2(preanalisis.tipo);
+
+    private void PARAMETERS(List <Token> params) {
+        if(preanalisis.tipo == TipoToken.IDENTIFIER){
+            Token paramToken=preanalisis;
+            match(TipoToken.IDENTIFIER);
+            params.add(paramToken);
+            PARAMETERS_2(params);
+        }else{
+            hayErrores=true;
+            System.out.println("Error, se esperaba un id");
+        }
     }
-    
-    private void PARAMETERS_2(List<Token>parametros){
-        if (preanalisis.tipo==TipoToken.COMMA) {
+
+    private void PARAMETERS_2(List<Token> parametros) {
+        if (preanalisis.tipo == TipoToken.COMMA) {
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
             Token name = previous();
             parametros.add(name);
             PARAMETERS_2(parametros);
-        }else{
-             System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema
-                     +" se esperaba un identificador");
+        } else {
+            System.out.println("Error, se esperaba un identificador");
         }
     }
-    
+
     private List<Expression> ARGUMENTS_OPC(){
-        switch(preanalisis.tipo){
-            case BANG:
-            case MINUS:
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case NUMBER:
-            case STRING:
-            case IDENTIFIER:
-                ARGUMENTS();
-           
-        default:
-                System.out.println("Error en la posicion" 
-                        + preanalisis.posicion
-                        +" cerca de "+ preanalisis.lexema);   
+        List <Expression> arguments = new ArrayList<>();
+        if(preanalisis.tipo == TipoToken.BANG || preanalisis.tipo == TipoToken.MINUS || preanalisis.tipo == TipoToken.TRUE || preanalisis.tipo == TipoToken.FALSE || preanalisis.tipo == TipoToken.NULL || preanalisis.tipo == TipoToken.NUMBER || preanalisis.tipo == TipoToken.STRING || preanalisis.tipo == TipoToken.IDENTIFIER || preanalisis.tipo == TipoToken.LEFT_PAREN){           
+            arguments.add(expression());
+            ARGUMENTS(arguments);
         }
-            
-        
-        
-        return null;
+        return arguments;
     }
-    
-    private void ARGUMENTS(){
-        if (hayErrores) return;
-        match(TipoToken.COMMA);
-        expression();
-        ARGUMENTS();
+
+    private void ARGUMENTS(List <Expression> arguments){ 
+        while(preanalisis.tipo == TipoToken.COMMA){
+            match(TipoToken.COMMA);
+            arguments.add(expression());
+        }
     }
-    
-    private void match(TipoToken tt){
-        if(preanalisis.tipo == tt){
+
+    private void match(TipoToken tt) {
+        if (preanalisis.tipo == tt) {
             i++;
             preanalisis = tokens.get(i);
-        }
-        else{
+        } else {
             hayErrores = true;
             System.out.println("Error encontrado");
         }
     }
-    
+
     private Token previous() {
         return this.tokens.get(i - 1);
     }
-}
